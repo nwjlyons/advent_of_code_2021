@@ -44,7 +44,7 @@ Part1.increase_count(test_data)
 
 ```elixir
 data =
-  "input.txt"
+  "day_one/input.txt"
   |> File.read!()
   |> String.split()
   |> Enum.map(&String.to_integer/1)
@@ -79,10 +79,9 @@ defmodule Part2 do
   end
 end
 
-# 1611
-Part2.sliding_increase(data)
+Part2.sliding_increase(test_data)
 ```
 
 ```output
-1611
+{199, 269}
 ```

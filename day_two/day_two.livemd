@@ -1,0 +1,85 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Advent of Code Day 2
+
+## Part 1
+
+```elixir
+defmodule Part1 do
+  def process_input(input) when is_binary(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(&String.split/1)
+    |> Enum.map(fn [direction, amount] ->
+      {String.to_atom(direction), String.to_integer(amount)}
+    end)
+  end
+
+  def calculate_position(data) when is_list(data) do
+    data
+    |> Enum.reduce([0, 0], fn
+      {:forward, amount}, [x, y] ->
+        [x + amount, y]
+
+      {:down, amount}, [x, y] ->
+        [x, y + amount]
+
+      {:up, amount}, [x, y] ->
+        [x, y - amount]
+    end)
+    |> Enum.product()
+  end
+end
+
+test_data =
+  """
+  forward 5
+  down 5
+  forward 8
+  up 3
+  down 8
+  forward 2
+  """
+  |> Part1.process_input()
+
+data =
+  "day_two/input.txt"
+  |> File.read!()
+  |> Part1.process_input()
+
+Part1.calculate_position(data)
+```
+
+```output
+2322630
+```
+
+## Part 2
+
+```elixir
+defmodule Part2 do
+  def calculate_position(data) when is_list(data) do
+    {x, y, _aim} =
+      data
+      |> Enum.reduce({0, 0, 0}, fn
+        {:down, amount}, {x, y, aim} ->
+          {x, y, aim + amount}
+
+        {:up, amount}, {x, y, aim} ->
+          {x, y, aim - amount}
+
+        {:forward, amount}, {x, y, aim} ->
+          {x + amount, y + amount * aim, aim}
+      end)
+
+    x * y
+  end
+end
+
+data
+|> Part2.calculate_position()
+```
+
+```output
+2105273490
+```
