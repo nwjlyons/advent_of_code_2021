@@ -25,7 +25,7 @@ test_input = """
  2  0 12  3  7
 """
 
-input = File.read!("day_four/input.txt")
+input = File.read!("day_04/input.txt")
 
 defmodule Setup do
   def parse(input) when is_binary(input) do

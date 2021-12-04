@@ -20,7 +20,7 @@ test_data = """
 01010
 """
 
-data = File.read!("day_three/input.txt")
+data = File.read!("day_03/input.txt")
 ```
 
 ```output

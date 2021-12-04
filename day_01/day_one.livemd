@@ -44,7 +44,7 @@ Part1.increase_count(test_data)
 
 ```elixir
 data =
-  "day_one/input.txt"
+  "day_01/input.txt"
   |> File.read!()
   |> String.split()
   |> Enum.map(&String.to_integer/1)

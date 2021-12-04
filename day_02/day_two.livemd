@@ -43,7 +43,7 @@ test_data =
   |> Part1.process_input()
 
 data =
-  "day_two/input.txt"
+  "day_02/input.txt"
   |> File.read!()
   |> Part1.process_input()
 
