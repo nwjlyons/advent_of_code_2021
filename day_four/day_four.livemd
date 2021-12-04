@@ -1,0 +1,153 @@
+# Advent of Code Day 4
+
+## Setup
+
+```elixir
+test_input = """
+7,4,9,5,11,17,23,2,0,14,21,24,10,16,13,6,15,25,12,22,18,20,8,19,3,26,1
+
+22 13 17 11  0
+ 8  2 23  4 24
+21  9 14 16  7
+ 6 10  3 18  5
+ 1 12 20 15 19
+
+ 3 15  0  2 22
+ 9 18 13 17  5
+19  8  7 25 23
+20 11 10 24  4
+14 21 16 12  6
+
+14 21 17 24  4
+10 16 15  9 19
+18  8 23 26 20
+22 11 13  6  5
+ 2  0 12  3  7
+"""
+
+input = File.read!("day_four/input.txt")
+
+defmodule Setup do
+  def parse(input) when is_binary(input) do
+    [numbers | grids] = String.split(input, "\n\n", trim: true)
+
+    numbers =
+      numbers
+      |> String.split(",")
+      |> Enum.map(&String.to_integer/1)
+
+    grids =
+      grids
+      |> Enum.map(fn grid ->
+        grid
+        |> String.split("\n", trim: true)
+        |> Enum.map(&String.split(&1, " ", trim: true))
+        |> Enum.map(fn row ->
+          Enum.map(row, &String.to_integer/1)
+        end)
+      end)
+
+    {grids, numbers}
+  end
+end
+```
+
+## Part 1
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+defmodule DayFourPart1 do
+  def play_bingo(grids, numbers) do
+    Enum.reduce_while(numbers, [], fn next_number, played_numbers ->
+      case find_first_grid_with_bingo(grids, played_numbers) do
+        {:bingo, grid} ->
+          {:halt, {grid, played_numbers}}
+
+        :nobingo ->
+          {:cont, [next_number | played_numbers]}
+      end
+    end)
+  end
+
+  def find_first_grid_with_bingo(grids, numbers) do
+    Enum.reduce_while(grids, :nobingo, fn grid, :nobingo ->
+      if grid_bingo?(grid, numbers) do
+        {:halt, {:bingo, grid}}
+      else
+        {:cont, :nobingo}
+      end
+    end)
+  end
+
+  def grid_bingo?(grid, numbers) do
+    numbers = MapSet.new(numbers)
+    horizontal_bingo?(grid, numbers) || vertical_bingo?(grid, numbers)
+  end
+
+  defp horizontal_bingo?(grid, numbers) do
+    Enum.any?(grid, &MapSet.subset?(MapSet.new(&1), numbers))
+  end
+
+  defp vertical_bingo?(grid, numbers) do
+    grid
+    |> transpose()
+    |> Enum.any?(&MapSet.subset?(MapSet.new(&1), numbers))
+  end
+
+  defp transpose(grid) do
+    grid
+    |> Enum.zip()
+    |> Enum.map(&Tuple.to_list/1)
+  end
+
+  def score(grid, numbers) do
+    last_winning_number = hd(numbers)
+    grid_mapset = grid |> List.flatten() |> MapSet.new()
+    numbers_mapset = MapSet.new(numbers)
+
+    sum_of_unmarked_numbers =
+      MapSet.difference(grid_mapset, numbers_mapset)
+      |> MapSet.to_list()
+      |> Enum.sum()
+
+    sum_of_unmarked_numbers * last_winning_number
+  end
+end
+
+{grids, numbers} = Setup.parse(input)
+{winning_grid, winning_numbers} = DayFourPart1.play_bingo(grids, numbers)
+DayFourPart1.score(winning_grid, winning_numbers)
+```
+
+## Part 2
+
+```elixir
+defmodule DayFourPart2 do
+  def last_bingo(grids, numbers) do
+    Enum.reduce_while(numbers, {grids, []}, fn next_number, {grids_acc, played_numbers} ->
+      case reject_bingo(grids_acc, played_numbers) do
+        [last_bingo_grid] ->
+          {:halt, {last_bingo_grid, played_numbers}}
+
+        remaing_grids ->
+          {:cont, {remaing_grids, [next_number | played_numbers]}}
+      end
+    end)
+  end
+
+  def reject_bingo(grids, numbers) do
+    Enum.reject(grids, &DayFourPart1.grid_bingo?(&1, numbers))
+  end
+end
+
+{grids, numbers} = Setup.parse(input)
+{last_grid, played_numbers} = DayFourPart2.last_bingo(grids, numbers)
+
+false = DayFourPart1.grid_bingo?(last_grid, played_numbers)
+
+next_numbers = Enum.slice(numbers, 0..length(played_numbers)) |> Enum.reverse()
+DayFourPart1.grid_bingo?(last_grid, next_numbers)
+
+DayFourPart1.score(last_grid, next_numbers)
+```
