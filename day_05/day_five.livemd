@@ -1,0 +1,126 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Advent of Code Day 5
+
+## Setup
+
+```elixir
+test_input = """
+0,9 -> 5,9
+8,0 -> 0,8
+9,4 -> 3,4
+2,2 -> 2,1
+7,0 -> 7,4
+6,4 -> 2,0
+0,9 -> 2,9
+3,4 -> 1,4
+0,0 -> 8,8
+5,5 -> 8,2
+"""
+
+input = File.read!("day_05/input.txt")
+
+defmodule Setup do
+  def parse(input) when is_binary(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn row ->
+      row
+      |> String.split("->")
+      |> Enum.map(fn points ->
+        points
+        |> String.trim()
+        |> String.split(",")
+        |> Enum.map(&String.to_integer/1)
+        |> List.to_tuple()
+      end)
+      |> List.to_tuple()
+    end)
+  end
+end
+```
+
+```output
+{:module, Setup, <<70, 79, 82, 49, 0, 0, 7, ...>>, {:parse, 1}}
+```
+
+## Part 1
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+defmodule DayFivePart1 do
+  def dangerous_areas(input) do
+    input
+    |> Enum.map(fn line -> {line, line_direction(line)} end)
+    |> Enum.reject(fn {_line, direction} -> direction == :diagonal end)
+    |> Enum.map(&generate_points_along_line/1)
+    |> List.flatten()
+    |> Enum.frequencies()
+    |> Map.to_list()
+    |> Enum.filter(fn {_point, count} -> count >= 2 end)
+    |> Enum.count()
+  end
+
+  def line_direction({{_, y}, {_, y}}), do: :horizontal
+  def line_direction({{x, _}, {x, _}}), do: :vertical
+  def line_direction(_), do: :diagonal
+
+  def generate_points_along_line({{{x1, y}, {x2, y}}, :horizontal}) do
+    Enum.map(x1..x2, fn x -> {x, y} end)
+  end
+
+  def generate_points_along_line({{{x, y1}, {x, y2}}, :vertical}) do
+    Enum.map(y1..y2, fn y -> {x, y} end)
+  end
+end
+
+input
+|> Setup.parse()
+|> DayFivePart1.dangerous_areas()
+```
+
+```output
+5608
+```
+
+## Part 2
+
+```elixir
+defmodule DayFivePart2 do
+  def dangerous_areas(input) do
+    input
+    |> Enum.map(fn line -> {line, line_direction(line)} end)
+    |> Enum.map(&generate_points_along_line/1)
+    |> List.flatten()
+    |> Enum.frequencies()
+    |> Map.to_list()
+    |> Enum.filter(fn {_point, count} -> count >= 2 end)
+    |> Enum.count()
+  end
+
+  def line_direction({{_, y}, {_, y}}), do: :horizontal
+  def line_direction({{x, _}, {x, _}}), do: :vertical
+  def line_direction(_), do: :diagonal
+
+  def generate_points_along_line({{{x1, y}, {x2, y}}, :horizontal}) do
+    Enum.map(x1..x2, fn x -> {x, y} end)
+  end
+
+  def generate_points_along_line({{{x, y1}, {x, y2}}, :vertical}) do
+    Enum.map(y1..y2, fn y -> {x, y} end)
+  end
+
+  def generate_points_along_line({{{x1, y1}, {x2, y2}}, :diagonal}) do
+    Enum.zip([x1..x2, y1..y2])
+  end
+end
+
+input
+|> Setup.parse()
+|> DayFivePart2.dangerous_areas()
+```
+
+```output
+20299
+```
