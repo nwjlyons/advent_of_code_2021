@@ -60,7 +60,7 @@ DaySixPart1.lanternfish_count(data, 80)
 ```elixir
 defmodule DaySixPart2 do
   @moduledoc """
-  Use a map with **eight** keys instead of a list with potencially **millions** of elements.
+  Use a map with **eight** keys instead of a list with over a **trillion** elements.
   """
   @initial %{
     0 => 0,
