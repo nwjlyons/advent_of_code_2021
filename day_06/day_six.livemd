@@ -62,17 +62,7 @@ defmodule DaySixPart2 do
   @moduledoc """
   Use a map with **eight** keys instead of a list with over a **trillion** elements.
   """
-  @initial %{
-    0 => 0,
-    1 => 0,
-    2 => 0,
-    3 => 0,
-    4 => 0,
-    5 => 0,
-    6 => 0,
-    7 => 0,
-    8 => 0
-  }
+  @initial for i <- 0..8, do: {i, 0}, into: %{}
 
   def lanternfish_count(data, days) when days > 0 do
     @initial
@@ -109,6 +99,42 @@ end
 
 data = Setup.parse(input)
 DaySixPart2.lanternfish_count(data, 256)
+```
+
+```output
+1572358335990
+```
+
+## Part 2 - Pattern Matching
+
+```elixir
+# Inspired by this Haskell tweet https://twitter.com/boudrobam/status/1467931786290343942
+
+defmodule DaySixPart2PatternMatching do
+  @initial for i <- 0..8, do: {i, 0}, into: %{}
+
+  def lanternfish_count(data, days) when days > 0 do
+    f = Map.merge(@initial, Enum.frequencies(data))
+
+    [f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8]]
+    |> lanternfish_in_x_days(days)
+    |> Enum.sum()
+  end
+
+  defp lanternfish_in_x_days(fish, x) do
+    Enum.reduce(1..x, fish, fn _day, acc ->
+      lanternfish_counts_next_day(acc)
+    end)
+  end
+
+  defp lanternfish_counts_next_day([f0, f1, f2, f3, f4, f5, f6, f7, f8]) do
+    [f1, f2, f3, f4, f5, f6, f7 + f0, f8, f0]
+  end
+end
+
+data = Setup.parse(input)
+DaySixPart2PatternMatching.lanternfish_count(data, 256)
+# 26984457539
 ```
 
 ```output
