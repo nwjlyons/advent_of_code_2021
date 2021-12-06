@@ -1,0 +1,116 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Advent of Code Day 6
+
+## Setup
+
+```elixir
+test_input = "3,4,3,1,2"
+
+input = File.read!("day_06/input.txt")
+
+defmodule Setup do
+  def parse(input) when is_binary(input) do
+    input
+    |> String.replace("\n", "")
+    |> String.split(",")
+    |> Enum.map(&String.to_integer/1)
+  end
+end
+```
+
+```output
+{:module, Setup, <<70, 79, 82, 49, 0, 0, 6, ...>>, {:parse, 1}}
+```
+
+## Part 1
+
+```elixir
+defmodule DaySixPart1 do
+  def lanternfish_count(fish_lifespans, days) when days > 0 do
+    1..days
+    |> Enum.reduce(fish_lifespans, fn _day, fish_lifespans_acc ->
+      process_day(fish_lifespans_acc)
+    end)
+    |> length()
+  end
+
+  defp process_day(fish_lifespans) do
+    Enum.reduce(fish_lifespans, [], fn
+      0, fish_lifespans_acc ->
+        [6, 8 | fish_lifespans_acc]
+
+      fish, fish_lifespans_acc ->
+        [fish - 1 | fish_lifespans_acc]
+    end)
+  end
+end
+
+data = Setup.parse(input)
+
+DaySixPart1.lanternfish_count(data, 80)
+```
+
+```output
+346063
+```
+
+## Part 2
+
+```elixir
+defmodule DaySixPart2 do
+  @moduledoc """
+  Use a map with **eight** keys instead of a list with potencially **millions** of elements.
+  """
+  @initial %{
+    0 => 0,
+    1 => 0,
+    2 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+    6 => 0,
+    7 => 0,
+    8 => 0
+  }
+
+  def lanternfish_count(data, days) when days > 0 do
+    @initial
+    |> Map.merge(Enum.frequencies(data))
+    |> lanternfish_in_x_days(days)
+    |> Map.values()
+    |> Enum.sum()
+  end
+
+  defp lanternfish_in_x_days(fish, x) do
+    Enum.reduce(1..x, fish, fn _day, acc ->
+      lanternfish_for_next_day(acc)
+    end)
+  end
+
+  defp lanternfish_for_next_day(fish) do
+    Enum.reduce(8..0, %{}, fn day, fish_acc ->
+      deduct_timer_and_spawn(fish, day, fish_acc)
+    end)
+  end
+
+  defp deduct_timer_and_spawn(fish_before, 0, fish_after) do
+    quantity = Map.fetch!(fish_before, 0)
+
+    fish_after
+    |> Map.update!(6, &(&1 + quantity))
+    |> Map.put(8, quantity)
+  end
+
+  defp deduct_timer_and_spawn(fish_before, day, fish_after) do
+    Map.put(fish_after, day - 1, Map.fetch!(fish_before, day))
+  end
+end
+
+data = Setup.parse(input)
+DaySixPart2.lanternfish_count(data, 256)
+```
+
+```output
+1572358335990
+```
