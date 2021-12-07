@@ -1,0 +1,94 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Advent of Code Day 7
+
+## Setup
+
+```elixir
+test_input = """
+16,1,2,0,4,2,7,1,2,14
+"""
+
+input = File.read!("day_07/input.txt")
+
+defmodule Setup do
+  def parse(input) when is_binary(input) do
+    input
+    |> String.trim()
+    |> String.split(",")
+    |> Enum.map(&String.to_integer/1)
+  end
+end
+```
+
+```output
+{:module, Setup, <<70, 79, 82, 49, 0, 0, 6, ...>>, {:parse, 1}}
+```
+
+## Part 1
+
+```elixir
+defmodule DaySevenPart1 do
+  def fuel_used(positions) do
+    {min, max} = Enum.min_max(positions)
+
+    Enum.reduce(min..max, %{}, fn target_pos, acc ->
+      Map.put(acc, target_pos, fuel_used_for_position(positions, target_pos))
+    end)
+    |> Enum.to_list()
+    |> Enum.min(fn {_, left_fuel}, {_, right_fuel} ->
+      left_fuel <= right_fuel
+    end)
+  end
+
+  def fuel_used_for_position(positions, target_pos) do
+    positions
+    |> Enum.reduce([], fn pos, acc ->
+      [abs(pos - target_pos) | acc]
+    end)
+    |> Enum.sum()
+  end
+end
+
+data = Setup.parse(input)
+DaySevenPart1.fuel_used(data)
+```
+
+```output
+{321, 335330}
+```
+
+## Part 2
+
+```elixir
+defmodule DaySevenPart2 do
+  def fuel_used(positions) do
+    {min, max} = Enum.min_max(positions)
+
+    Enum.reduce(min..max, %{}, fn target_pos, acc ->
+      Map.put(acc, target_pos, fuel_used_for_position(positions, target_pos))
+    end)
+    |> Enum.to_list()
+    |> Enum.min(fn {_, left_fuel}, {_, right_fuel} ->
+      left_fuel <= right_fuel
+    end)
+  end
+
+  def fuel_used_for_position(positions, target_pos) do
+    positions
+    |> Enum.reduce([], fn pos, acc ->
+      distance = abs(pos - target_pos)
+      [Enum.sum(distance..0) | acc]
+    end)
+    |> Enum.sum()
+  end
+end
+
+data = Setup.parse(input)
+DaySevenPart2.fuel_used(data)
+# 92439766
+```
+
+```output
+{457, 92439766}
+```
