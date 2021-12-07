@@ -86,7 +86,6 @@ end
 
 data = Setup.parse(input)
 DaySevenPart2.fuel_used(data)
-# 92439766
 ```
 
 ```output
