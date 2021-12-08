@@ -18,6 +18,8 @@ egadfb cdbfeg cegd fecab cgb gbdefca cg fgcdab egfdb bfceg | gbdfcae bgc cg cgb
 gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce
 """
 
+input = File.read!("day_08/input.txt")
+
 defmodule Setup do
   def parse(input) when is_binary(input) do
     input
@@ -33,28 +35,7 @@ end
 ```
 
 ```output
-[
-  {["be", "cfbegad", "cbdgef", "fgaecd", "cgeb", "fdcge", "agebfd", "fecdb", "fabcd", "edb"],
-   ["fdgacbe", "cefdb", "cefbgd", "gcbe"]},
-  {["edbfga", "begcd", "cbg", "gc", "gcadebf", "fbgde", "acbgfd", "abcde", "gfcbed", "gfec"],
-   ["fcgedb", "cgb", "dgebacf", "gc"]},
-  {["fgaebd", "cg", "bdaec", "gdafb", "agbcfd", "gdcbef", "bgcad", "gfac", "gcb", "cdgabef"],
-   ["cg", "cg", "fdcagb", "cbg"]},
-  {["fbegcd", "cbd", "adcefb", "dageb", "afcb", "bc", "aefdc", "ecdab", "fgdeca", "fcdbega"],
-   ["efabcd", "cedba", "gadfec", "cb"]},
-  {["aecbfdg", "fbg", "gf", "bafeg", "dbefa", "fcge", "gcbea", "fcaegb", "dgceab", "fcbdga"],
-   ["gecf", "egdcabf", "bgf", "bfgea"]},
-  {["fgeab", "ca", "afcebg", "bdacfeg", "cfaedg", "gcfdb", "baec", "bfadeg", "bafgc", "acf"],
-   ["gebdcfa", "ecba", "ca", "fadegcb"]},
-  {["dbcfg", "fgd", "bdegcaf", "fgec", "aegbdf", "ecdfab", "fbedc", "dacgb", "gdcebf", "gf"],
-   ["cefg", "dcbef", "fcge", "gbcadfe"]},
-  {["bdfegc", "cbegaf", "gecbf", "dfcage", "bdacg", "ed", "bedf", "ced", "adcbefg", "gebcd"],
-   ["ed", "bcgafe", "cdgba", "cbgef"]},
-  {["egadfb", "cdbfeg", "cegd", "fecab", "cgb", "gbdefca", "cg", "fgcdab", "egfdb", "bfceg"],
-   ["gbdfcae", "bgc", "cg", "cgb"]},
-  {["gcafb", "gcf", "dcaebfg", "ecagb", "gf", "abcdeg", "gaef", "cafbge", "fdbac", "fegbdc"],
-   ["fgae", "cfgab", "fg", "bagce"]}
-]
+{:module, Setup, <<70, 79, 82, 49, 0, 0, 7, ...>>, {:parse, 1}}
 ```
 
 ## Part 1
@@ -71,11 +52,200 @@ defmodule DayEightPart1 do
   end
 end
 
-test_input
+input
 |> Setup.parse()
 |> DayEightPart1.count()
 ```
 
 ```output
-26
+449
+```
+
+## Part 2
+
+```elixir
+defmodule DayEightPart2 do
+  @segment_map %{
+    0 => [:top_left, :top, :top_right, :bottom_left, :bottom, :bottom_right],
+    1 => [:top_right, :bottom_right],
+    2 => [:top, :top_right, :middle, :bottom_left, :bottom],
+    3 => [:top, :bottom, :middle, :top_right, :bottom_right],
+    4 => [:top_left, :middle, :top_right, :bottom_right],
+    5 => [:top, :top_left, :bottom, :middle, :bottom_right],
+    6 => [:top, :top_left, :bottom_left, :bottom, :middle, :bottom_right],
+    7 => [:top, :top_right, :bottom_right],
+    8 => [:top, :top_left, :bottom_left, :bottom, :middle, :top_right, :bottom_right],
+    9 => [:top, :top_left, :bottom, :middle, :top_right, :bottom_right]
+  }
+
+  def number_on_display({signal_values, output_values}) do
+    lookup_table =
+      signal_values
+      |> determine_segments_from_known_numbers()
+      |> determine_segments_from_unknown_numbers()
+      |> make_lookup_table()
+      |> Map.new(fn {k, v} -> {v, k} end)
+
+    Enum.map(output_values, fn val ->
+      output = String.graphemes(val) |> Enum.sort() |> Enum.join()
+      Map.fetch!(lookup_table, output)
+    end)
+    |> Enum.join()
+    |> String.to_integer()
+  end
+
+  defp determine_segments_from_known_numbers(signal_values) when is_list(signal_values) do
+    Enum.reduce(signal_values, %{}, fn signal, acc ->
+      Map.update(acc, number(signal), [signal], &[signal | &1])
+    end)
+  end
+
+  defp number(signal) when byte_size(signal) == 2, do: 1
+  defp number(signal) when byte_size(signal) == 3, do: 7
+  defp number(signal) when byte_size(signal) == 4, do: 4
+  defp number(signal) when byte_size(signal) == 7, do: 8
+  defp number(signal) when byte_size(signal) == 5, do: [2, 3, 5]
+  defp number(signal) when byte_size(signal) == 6, do: [0, 6, 9]
+
+  defp determine_segments_from_unknown_numbers(%{} = numbers) do
+    [
+      :top,
+      :top_left,
+      :bottom_left,
+      :bottom,
+      :middle,
+      :top_right,
+      :bottom_right
+    ]
+    |> Enum.reduce(%{}, fn segment_to_find, acc ->
+      Map.put(acc, segment_to_find, segment(segment_to_find, numbers, acc))
+    end)
+  end
+
+  defp segment(:top, numbers, _segments) do
+    one = Map.fetch!(numbers, 1) |> hd()
+    seven = Map.fetch!(numbers, 7) |> hd()
+
+    String.graphemes(seven)
+    |> Enum.reject(fn letter -> letter in String.graphemes(one) end)
+    |> hd()
+  end
+
+  defp segment(:top_left, numbers, _segments) do
+    two_three_five = Map.fetch!(numbers, [2, 3, 5])
+    four = Map.fetch!(numbers, 4) |> hd()
+
+    two_three_five
+    |> Enum.join()
+    |> String.graphemes()
+    |> Enum.frequencies()
+    |> Map.to_list()
+    |> Enum.reduce([], fn
+      {letter, 1}, acc -> [letter | acc]
+      _, acc -> acc
+    end)
+    |> Enum.filter(fn letter -> letter in String.graphemes(four) end)
+    |> hd()
+  end
+
+  defp segment(:bottom_left, numbers, _segments) do
+    two_three_five = Map.fetch!(numbers, [2, 3, 5])
+    four = Map.fetch!(numbers, 4) |> hd()
+
+    two_three_five
+    |> Enum.join()
+    |> String.graphemes()
+    |> Enum.frequencies()
+    |> Map.to_list()
+    |> Enum.reduce([], fn
+      {letter, 1}, acc -> [letter | acc]
+      _, acc -> acc
+    end)
+    |> Enum.reject(fn letter -> letter in String.graphemes(four) end)
+    |> hd()
+  end
+
+  defp segment(:bottom, numbers, segments) do
+    eight = Map.fetch!(numbers, 8) |> hd() |> String.graphemes()
+    four = Map.fetch!(numbers, 4) |> hd() |> String.graphemes()
+    top = Map.fetch!(segments, :top)
+    bottom_left = Map.fetch!(segments, :bottom_left)
+
+    exclude = [top, bottom_left | four]
+
+    eight
+    |> Enum.reject(fn letter -> letter in exclude end)
+    |> hd()
+  end
+
+  defp segment(:middle, numbers, segments) do
+    top_left = Map.fetch!(segments, :top_left)
+    one = Map.fetch!(numbers, 1) |> hd() |> String.graphemes()
+
+    four = Map.fetch!(numbers, 4) |> hd() |> String.graphemes()
+
+    reject = [top_left | one]
+    Enum.reject(four, &(&1 in reject)) |> hd()
+  end
+
+  defp segment(:top_right, numbers, segments) do
+    top = Map.fetch!(segments, :top)
+    top_left = Map.fetch!(segments, :top_left)
+    middle = Map.fetch!(segments, :middle)
+    bottom_left = Map.fetch!(segments, :bottom_left)
+    bottom = Map.fetch!(segments, :bottom)
+
+    zero_six_nine =
+      Map.fetch!(numbers, [0, 6, 9])
+      |> Enum.join()
+      |> String.graphemes()
+
+    exclude = [top, top_left, middle, bottom_left, bottom]
+    top_right_bottom_right = Enum.reject(zero_six_nine, &(&1 in exclude))
+
+    top_right_bottom_right
+    |> Enum.frequencies()
+    |> Map.new(fn {k, v} -> {v, k} end)
+    |> Map.fetch!(2)
+  end
+
+  defp segment(:bottom_right, numbers, segments) do
+    top = Map.fetch!(segments, :top)
+    top_left = Map.fetch!(segments, :top_left)
+    middle = Map.fetch!(segments, :middle)
+    bottom_left = Map.fetch!(segments, :bottom_left)
+    bottom = Map.fetch!(segments, :bottom)
+
+    zero_six_nine =
+      Map.fetch!(numbers, [0, 6, 9])
+      |> Enum.join()
+      |> String.graphemes()
+
+    exclude = [top, top_left, middle, bottom_left, bottom]
+    top_right_bottom_right = Enum.reject(zero_six_nine, &(&1 in exclude))
+
+    top_right_bottom_right
+    |> Enum.frequencies()
+    |> Map.new(fn {k, v} -> {v, k} end)
+    |> Map.fetch!(3)
+  end
+
+  defp make_lookup_table(segments_from_signal) do
+    Map.map(@segment_map, fn {_k, v} ->
+      v
+      |> Enum.map(&Map.fetch!(segments_from_signal, &1))
+      |> Enum.sort()
+      |> Enum.join()
+    end)
+  end
+end
+
+input
+|> Setup.parse()
+|> Enum.map(fn entry -> DayEightPart2.number_on_display(entry) end)
+|> Enum.sum()
+```
+
+```output
+968175
 ```
