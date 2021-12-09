@@ -1,0 +1,94 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Advent of Code Day 9
+
+## Setup
+
+```elixir
+test_input = """
+2199943210
+3987894921
+9856789892
+8767896789
+9899965678
+"""
+
+input = File.read!("day_09/input.txt")
+
+defmodule Setup do
+  def parse(input) when is_binary(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn row ->
+      row
+      |> String.graphemes()
+      |> Enum.map(&String.to_integer/1)
+    end)
+  end
+end
+```
+
+```output
+{:module, Setup, <<70, 79, 82, 49, 0, 0, 6, ...>>, {:parse, 1}}
+```
+
+## Part 1
+
+```elixir
+defmodule DayNinePart1 do
+  def lowpoints(heights) do
+    heightmap = heights_to_map(heights)
+
+    adjacent_locations_map = adjacent_locations(heightmap)
+
+    is_height_lowest =
+      is_height_lowest_compared_to_adjacent_locations(heightmap, adjacent_locations_map)
+
+    is_height_lowest
+    |> Map.to_list()
+    |> Enum.reject(fn {_k, v} ->
+      v == false
+    end)
+    |> Enum.map(fn {k, _v} ->
+      Map.get(heightmap, k) + 1
+    end)
+    |> Enum.sum()
+  end
+
+  defp heights_to_map(heights) do
+    Enum.reduce(Enum.with_index(heights), %{}, fn {row, y}, acc ->
+      Enum.reduce(Enum.with_index(row), acc, fn {cell, x}, row_acc ->
+        Map.put(row_acc, {x, y}, cell)
+      end)
+    end)
+  end
+
+  defp adjacent_locations(heightmap) do
+    Map.map(heightmap, fn {{x, y}, _height} ->
+      above = Map.get(heightmap, {x, y - 1})
+      below = Map.get(heightmap, {x, y + 1})
+      left = Map.get(heightmap, {x - 1, y})
+      right = Map.get(heightmap, {x + 1, y})
+      Enum.reject([left, above, right, below], &(&1 == nil))
+    end)
+  end
+
+  defp is_height_lowest_compared_to_adjacent_locations(heightmap, adjacent_locations_map) do
+    Map.map(heightmap, fn {{x, y}, height} ->
+      adjacent_locations = Map.get(adjacent_locations_map, {x, y})
+
+      Enum.all?(adjacent_locations, fn location ->
+        height < location
+      end)
+    end)
+  end
+end
+
+input
+|> Setup.parse()
+|> DayNinePart1.lowpoints()
+```
+
+```output
+448
+```
